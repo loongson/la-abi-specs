@@ -1,0 +1,37 @@
+= Application Binary Interface for the LoongArch™ Architecture
+Version 2.10
+Copyright © Loongson Technology 2023. All rights reserved.
+:toc: macro
+:toclevels: 3
+:toctitle:
+:doctype: article
+:icons: font
+
+toc::[]
+
+== Preamble
+
+This is the official documentation of the Application Binary Interface
+for the LoongArch™ Architecture.
+
+The latest ABI documentation releases are available at
+https://github.com/loongson/la-abi-specs and are licensed under the Creative
+Commons Attribution-NonCommercial-NoDerivatives 4.0 International
+(CC BY-NC-ND 4.0) License.
+
+To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-nd/4.0/
+or send a letter to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
+
+This specification is written in both English and Chinese. In the event of any
+inconsistency between the same document version in two languages, the Chinese
+version shall prevail.
+
+:sectnums:
+<<<
+include::lapcs.adoc[]
+
+<<<
+include::laelf.adoc[]
+
+<<<
+include::ladwarf.adoc[]
