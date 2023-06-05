@@ -1,0 +1,108 @@
+= DWARF for the LoongArch™ Architecture
+Version 20230425 +
+Copyright © Loongson Technology 2023. All rights reserved.
+
+== Abstract
+
+This document describes the use of the DWARF debugging information format
+in the Application Binary Interface (ABI) for the LoongArch architecture.
+
+== Keywords
+
+LoongArch, DWARF, Stack frame, CFA, CIE
+
+== Version History
+
+[%header,cols="^2,8"]
+|====
+|Version
+^|Description
+
+|20230425
+|initial version.
+|====
+
+== Overview
+
+The DWARF debugging format for LoongArch uses _DWARF Standard_ <<dwarfstd>>.
+This specification only describes LoongArch-specific definitions.
+
+== Terms and Abbreviations
+
+**DWARF** +
+Debugging With Attributed Record Formats.
+
+== LoongArch-specific DWARF Definitions
+
+=== DWARF Register Numbers
+
+DWARF Standard suggests that the mapping from a DWARF register name to a
+target register number should be defined by the ABI for the target architecture.
+DWARF register names are encoded as unsigned LEB128 integers.
+
+The table below lists the mapping from DWARF register numbers to LoongArch64
+registers.
+
+.Mapping from DWARF register numbers to LoongArch64 registers
+[%header,cols="^1,^1,^2"]
+[width=80%]
+|===
+| DWARF Register Number | LoongArch64 Register Name | Description
+
+| 0 -  31               | `$r0` - `$r31`            | General-purpose Register
+| 32 - 63               | `$f0` - `$f31`            | Floating-point Register
+| 64 -                  |                           | Reserved for future standard extensions
+|===
+
+
+=== CFA (Canonical Frame Address)
+
+The term Canonical Frame Address (CFA) is defined in _DWARF Debugging Information Format Version 5_ <<dwarf5>>, §6.4 Call Frame Information.
+
+This ABI adopts the typical definition of `CFA` given there:
+
+  the CFA is defined to be the value of the stack pointer at the call site in the
+  previous frame (which may be different from its value on entry to the current frame).
+
+The position of `CFA` in frame structure of LoongArch is shown below:
+
+           |                |
+           | previous frame |
+           |________________|
+  CFA----->|________________|<------ previous sp
+           |_______ra_______|
+           |_______fp_______|
+           |                |
+           | current frame  |
+           |________________|
+           |________________|<------ current sp
+
+
+=== CIE (Common Information Entry)
+
+The `$r1` register is used to store the return address of the function,
+and the value of the return address register field in `CIE` structure is `1`.
+
+The default `CFA` register at the function entry is `$r3`, and initial_instructions
+field in `CIE` structure can define `3` as the default `CFA` register.
+
+=== Call frame instructions
+
+Using the existing definitions in DWARF Standard.
+
+
+=== DWARF expression operations
+
+Using the existing definitions in DWARF Standard.
+
+
+[bibliography]
+== References
+
+* [[[dwarfstd]]] DWARF Standard,
+https://dwarfstd.org/
+
+* [[[dwarf5]]] DWARF Debugging Information Format Version 5,
+https://dwarfstd.org/doc/DWARF5.pdf
+
+
