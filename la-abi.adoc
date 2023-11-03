@@ -1,10 +1,11 @@
 = Application Binary Interface for the LoongArch™ Architecture
-Version 2.10
+Version 2.20
 Copyright © Loongson Technology 2023. All rights reserved.
 :toc: macro
 :toclevels: 3
 :toctitle:
 :doctype: article
+:title-page:
 :icons: font
 
 toc::[]

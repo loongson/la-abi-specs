@@ -12,7 +12,7 @@ base:
   font_style: normal
   font_size: 10
   line_height: 1.1
-  vertical_spacing: $base_line_height_length
+  vertical_spacing: 11
 
 heading:
   font_color: #d71520
@@ -114,9 +114,9 @@ footer:
   font_size: 8
   border_color: dddddd
   border_width: 0.25
-  height: $base_line_height_length * 3.5
+  height: 38.5
   line_height: 1
-  padding: [$base_line_height_length / 2, 1, 0, 1]
+  padding: [5.5, 1, 0, 1]
   vertical_align: top
   recto:
     right:

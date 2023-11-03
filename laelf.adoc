@@ -1,5 +1,5 @@
 = ELF for the LoongArch™ Architecture
-Version 20230519 +
+Version 20231102 +
 Copyright © Loongson Technology 2023. All rights reserved.
 
 == Abstract
@@ -20,6 +20,10 @@ LoongArch, ELF, ABI, SysV gABI, ELF header, Relocations
 
 |20230519
 |initial version, derived from the original __LoongArch ELF psABI__ document.
+
+|20231102
+|added relocation R_LARCH_CALL36, removed R_LARCH_DELETE / R_LARCH_CFA, and
+fixed the uleb128 relocation name.
 |====
 
 == Introduction
@@ -661,8 +665,8 @@ with check 28-bit signed overflow and 4-bit aligned
 |
 
 |101
-|R_LARCH_DELETE
-|The instruction should be deleted at link time.
+|(reserved)
+|
 |
 
 |102
@@ -676,8 +680,8 @@ with check 28-bit signed overflow and 4-bit aligned
 |`+(*(uint32_t *) PC) [24 ... 5] = (S + A - PC) [21 ... 2]+`
 
 |104
-|R_LARCH_CFA
-|Canonical Frame Address
+|(reserved)
+|
 |
 
 |105
@@ -696,7 +700,7 @@ with check 28-bit signed overflow and 4-bit aligned
 |`+(*(uleb128 *) PC) += S + A+`
 
 |108
-|R_LARCH_ADD_ULEB128
+|R_LARCH_SUB_ULEB128
 |ULEB128 in-place subtraction
 |`+(*(uleb128 *) PC) -= S + A+`
 
@@ -704,6 +708,13 @@ with check 28-bit signed overflow and 4-bit aligned
 |R_LARCH_64_PCREL
 |64-bit PC relative
 |`+(*(uint64_t *) PC) = (S+A-PC) [63 ... 0]+`
+
+|110
+|R_LARCH_CALL36
+|Used for medium code model function call instruction sequence pcaddu18i and jirl, these two instructions must adjacent.
+|`+(*(uint32_t *) PC) [24 ... 5] = (S+A-PC) [37 ... 18],+`
+
+ `+(*(uint32_t *) (PC+4)) [25 ... 10] = (S+A-PC) [17 ... 2]+`
 |===
 
 [bibliography]
