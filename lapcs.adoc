@@ -1,5 +1,5 @@
 = Procedure Call Standard for the LoongArch™ Architecture
-Version 20230519 +
+Version 20231103 +
 Copyright © Loongson Technology 2023. All rights reserved.
 
 == Abstract
@@ -20,6 +20,9 @@ LoongArch, Procedure call, Calling conventions, Data layout
 
 |20230519
 |initial version, derived from the original __LoongArch ELF psABI__ document.
+
+|20231103
+|revised the parameter passing rules of structures.
 |====
 
 == Introduction
@@ -288,14 +291,14 @@ The following conventional rules are respected:
 aligned components (i.e. with the largest natural alignment).
 
 * The size of any object is always a multiple of its alignment.
-Tail paddings are applied to aggregates and unions if it is necessary
-to comply with this rule. The state of the padding bits are not defined.
+Tail paddings are applied to structures and unions if it is necessary
+to comply with this rule. The state of the padding bytes are not defined.
 
 * Each member within a structure or an array is consecutively
 assigned to the lowest available offset with the appropriate alignment,
 in the order of their definitions.
 
-Structs and unions may be passed in registers as arguments or return values.
+Structures and unions may be passed in registers as arguments or return values.
 The layout rules of their members within the registers are described
 in the following section.
 
@@ -306,18 +309,15 @@ a declared integral type with a specified bit-width. The specified bit-width
 of a bit-field may not be greater than the width of its declared type.
 
 A bit-field must be contained in a block of memory that is appropriate to
-store its declared type, but it can share an addressable byte with
-other members of the struct or union.
+store its declared type, but it can share the same addressable byte with
+adjacent bitfields in the structure.
 
-When determining the alignment and size of the structure or the union,
-only the member bitfields' declared integral types are considered, and
-their specified width is irrelevant.
+When determining the alignment of the structure or the union, only the
+member bitfields' declared integral types are considered, and their
+specified widths are irrelevant.
 
 It is possible to define unnamed bit-fields in C. The declared type of these
 bit-fields do not affect the alignment of a structure or union.
-
-Zero-length bitfields defined in C and C++ should be ignored and take up
-no storage space in memory or in the registers.
 
 
 == Subroutine Calling Sequence
@@ -326,7 +326,7 @@ A subroutine as described in this specification may have none or arbitrary numbe
 of *arguments* and one *return value*. Each argument or return value have
 exactly one of the machine data types.
 
-The standard calling requirements apply only to functions exported to linker-editors
+The standard calling requirements apply only to functions exported to link-editors
 and dynamic loaders. Local functions that are not reachable from other compilation
 units may use other calling conventions.
 
@@ -434,30 +434,31 @@ is only guaranteed to cover the `lp64d` and `lp64s` variant, that is, `GRLEN` is
 `64` and `FRLEN` is `64` or `0`.
 
 NOTE: In the following text, w~arg~ is used for denoting the size of the
-argument object in bits.
+argument object in bits. And unless otherwise specified, "passed on the stack"
+implies "passed by value".
 
 ==== Scalars of fundamental types
 
 There are two cases:
 
-*0 < w~arg~ ≤ GRLEN*
+* 0 < w~arg~ ≤ GRLEN
 
-* The argument is passed in a single argument register, or on the stack by value
+** The argument is passed in a single argument register, or on the stack
 if none is available.
 
-* An fp32 / fp64 argument is passed in an FAR if there is one available.
+** An fp32 / fp64 argument is passed in an FAR if there is one available.
 Otherwise, it is passed in a GAR, or on the stack if none of the GARs are
 available. When passed in registers or on the stack, fp32 / fp64 arguments
 narrower than GRLEN bits are widened to GRLEN bits, with the upper bits undefined.
 
-* An integral argument is passed in a GAR if there is one available.
+** An integral argument is passed in a GAR if there is one available.
 Otherwise, it is passed on the stack. If the argument is narrower than the
 containing GAR, the <<int_ext_rules, general rules of integral extensions>>
 applies.
 
-*GRLEN < w~arg~ ≤ 2 × GRLEN*
+* GRLEN < w~arg~ ≤ 2 × GRLEN
 
-* The argument is passed in a pair of GARs with adjacent numbers, with the
+** The argument is passed in a pair of GARs with adjacent numbers, with the
 lower-ordered GRLEN bits in the low-numbered register. If only one GAR
 is available, the lower-ordered GRLEN bits are passed in this register
 and the most-significant GRLEN bits are passed on the stack. If no GAR is
@@ -465,90 +466,98 @@ available, the whole argument is passed on the stack.
 
 ==== Structures
 
-The storage location of structures during argument passing is also determined
-by w~arg~ and GRLEN:
+Upon function calls and returns, a structure argument's storage location
+is mainly determined by its size and the number of floating-point
+and/or integer members it contains. A structure argument can be passed
+in up to two registers if available.
 
-NOTE: Zero-length array members in structures should be ignored by both C and
-C++ compilers.
+The storage layout of a structure containing other structures or arrays
+is the same as its flattened counterpart, where the member structures are
+replaced by its individual members and member arrays of length n (n > 0)
+are broken down into n consecutive members of its element type.
 
-*w~arg~ > 2 × GRLEN*
+NOTE: Empty structures or unions are zero-sized in C while they have
+the size of 1 byte in {Cpp}.
 
-* The structure is passed by reference, i.e. replaced in the argument list
-with its memory address. If there is an available GAR, the address is passed
-in the GAR, otherwise it is passed on the stack.
+For example, `struct { struct { double d[1]; } a[2]; }` and
+`struct { double d0; double d1; }` should have the same storage layout when
+passed as function parameters.
 
-*0 < w~arg~ ≤ GRLEN*
+*Structures without floating-point members*
 
-* If the structure contains only one or two fp32 / fp64 members,
-and the same number of FARs are available, the members are passed in
-the FARs respectively, with the first member in the lower-numbered
-register.
+* w~arg~ > 2 × GRLEN
 
-* If the structure contains a fp32 / fp64 member and an integral
-member, when an FAR and a GAR is available, the fp32 / fp64 member
-of the structure is passed in the FAR, and the integer member of the
-structure is passed in the GAR. If no FAR but one GAR is available,
-the structure is passed in the GAR. If no GAR is available,
-is then passed on the stack.
+** The argument is passed by reference, i.e. replaced in the argument list with
+its memory address. If there is an available GAR, the address is passed in the
+GAR, otherwise it is passed on the stack.
 
-* In other cases, if there is an available GAR, the structure is passed in
-this register, otherwise it is passed on the stack.
+* GRLEN < w~arg~ ≤ 2 × GRLEN
 
-*GRLEN < w~arg~ ≤ 2 × GRLEN*
+** The argument is passed in a pair of GARs with adjacent numbers, with the
+lower-ordered GRLEN bits in the low-numbered register. If only one GAR is
+available, the lower-ordered GRLEN bits are passed in this register and the
+most-significant GRLEN bits are passed on the stack. If no GAR is available, the
+whole argument is passed on the stack.
 
-* If the structure contains only two fp64 members, or an fp64 member and
-an fp32 member, they are passed in a pair of adjacent FARs. If the FAR pair
-is not available, the structure is passed in a pair of GARs. In both cases,
-the first member is stored in the lower-numbered register. If only one GAR
-is available, the second member is passed on the stack instead. If no GAR
-is available, the structure is then passed on the stack.
+* 0 < w~arg~ ≤ GRLEN
 
-* If the structure is in of either of the following situation:
+** The argument is passed in a GAR if there is one available with the members
+laid out as if they were stored in memory. Otherwise, it is passed on the
+stack.
 
-** consists of only one fp128 member
-** consists of one fp64 member and two adjacent fp32 members
-** consists of 3-4 fp32 members
+* w~arg~ = 0
 
-+
-The argument is passed in a pair of available GARs, with the lower-ordered
-bits in the lower-numbered register. If only one GAR is available, only the
-lower-ordered bits are passed in the GAR, while the rest of the data is
-passed on the stack. If no GAR is available, the structure is passed on
-the stack.
+** Zero-sized structure arguments are ignored.
 
-* If the structure has only one fp32 / fp64 member and one integral
-member, the floating-point member of the structure is passed in
-the FAR, and the integral member is passed in the GAR. If no FAR
-is available, the members will be passed in two adjacent GARs separately.
-If only one GAR is available, then the first member is passed in the GAR
-and the second one is passed in on the stack. If neither a GAR nor an FAR
-is available, all of the structure is passed on the stack.
+*Structures with floating-point members*
 
-* Otherwise, the structure is passed in a pair of available GARs, with
-the least significant bits stored in the lower-numbered register. If only
-one GAR is available, the high-ordered bits passed on the stack instead.
-If no GAR is available, all of the structure is passed on the stack.
+* If the structure consists of one floating-pointer member within FRLEN bits
+wide, it is passed in an FAR if available.
+
+* If the structure consists of two floating-point members both within FRLEN
+bits wide, it is passed in two FARs if available.
+
+* If the structure consists of one integer member within GRLEN bits wide
+and one floating-point member within FRLEN bits wide, it is passed in a GAR
+and an FAR if available.
+
+* Additionally, if there are only zero-sized members including structures,
+arrays or bit-fields, or empty structure in {Cpp}, beside the structure
+members described in the above three rules, these additional members are simply
+ignored by the compiler, unless the considered additional member is a structure
+and has a nontrivial destructor or a copy constructor defined in {Cpp}.
+
+NOTE: In the above case, non-zero-length arrays of empty structures in {Cpp}
+are not ignored by the compiler as additional members in the considered
+structure.
+
+* Otherwise, the structure is passed according to the same rule as structures
+without floating-point members which is described above.
 
 ==== Unions
 
-Unions are only passed in the GARs or on the stack, depending on its width.
+Unions are only passed in the GARs or on the stack, depending on its size.
 
-*w~arg~ > 2 × GRLEN*
+* w~arg~ > 2 × GRLEN
 
-* The union is passed by reference and is replaced in the argument list with
+** The union is passed by reference and is replaced in the argument list with
 its memory address. If there is an available GAR, the reference is passed in
 the GAR, otherwise, the address is passed on the stack.
 
-*0 < w~arg~ ≤ GRLEN*
+* GRLEN < w~arg~ ≤ 2 × GRLEN
 
-* The argument is passed in a GAR, or on the stack by value if no GAR is available.
-
-*GRLEN < w~arg~ ≤ 2 × GRLEN*
-
-* The argument is passed in a pair of available GARs, with the low-order bits
+** The argument is passed in a pair of available GARs, with the low-order bits
 in the lower-numbered GAR and the high-order bits in the higher-numbered GAR.
 If only one GAR is available, the low-order bits are in the GAR and the high-order
 bits are on the stack. The arguments are passed on the stack when no GAR is available.
+
+* 0 < w~arg~ ≤ GRLEN
+
+** The argument is passed in a GAR, or on the stack if no GAR is available.
+
+* w~arg~ = 0
+
+** Zero-sized union arguments are ignored.
 
 ==== Complex floating-points
 
@@ -567,30 +576,30 @@ of the variadic arguments is passed on the stack, all subsequent arguments
 should also be passed on the stack. The variadic arguments never occupy the
 FARs.
 
-*w~arg~ > 2 × GRLEN*
+* w~arg~ > 2 × GRLEN
 
-* The arguments are passed by reference and are replaced in the argument list
+** The arguments are passed by reference and are replaced in the argument list
 with the address. If there is an available GAR, the reference is passed in
 the GAR, and passed on the stack if no GAR is available.
 
-*0 < w~arg~ ≤ GRLEN*
+* GRLEN < w~arg~ ≤ 2 × GRLEN
 
-* The variadic arguments are passed in a GAR, or on the stack by value if no
-GAR is available.
-
-*GRLEN < w~arg~ ≤ 2 × GRLEN*
-
-* An argument object in the variadic argument list with 2 × GRLEN alignment
+** An argument object in the variadic argument list with 2 × GRLEN alignment
 and size (e.g. an fp128 object) is passed in a pair of adjacent available GARs
 of which the first register is even-numbered. If only one GAR is available,
 the argument is passed on the stack, and this GAR would not be used for passing
 subsequent argument objects.
 
-* For other types of argument objects, the variadic arguments are passed in a
+** For other types of argument objects, the variadic arguments are passed in a
 pair of GARs. If only one GAR is available, the low-order bits are in the GAR
 and the high-order bits are on the stack.
 
-* If no GAR is available, the argument object is passed on the stack by value.
+** If no GAR is available, the argument object is passed on the stack by value.
+
+* 0 < w~arg~ ≤ GRLEN
+
+** The variadic arguments are passed in a GAR, or on the stack by value if no
+GAR is available.
 
 === Returning
 

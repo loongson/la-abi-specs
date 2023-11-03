@@ -84,6 +84,15 @@ release for project management purposes.
     * Clarify parameter passing rules for small `struct`s that contain both floating-point and integer members.
     * Clarify parameter passing rules for `struct`s that contain zero-length arrays or bitfields.
 
+- **v2.20**
+
+    * Revise the parameter passing rules of structures.
+    * Add R_LARCH_CALL36 relocation type.
+    * Remove R_LARCH_DELETE and mark its relocation number as reserved.
+    * Remove R_LARCH_CFA and mark its relocation number as reserved.
+    * Fix ULEB128 relocation name (R_LARCH_SUB_ULEB128).
+
+
 ## I18n
 
 This specification is written in both English and Chinese. In the event of any

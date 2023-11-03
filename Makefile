@@ -1,4 +1,4 @@
-SRC = lapcs.adoc laelf.adoc ladwarf.adoc
+SRC = la-abi.adoc lapcs.adoc laelf.adoc ladwarf.adoc
 PDF = la-abi.pdf
 
 PDF_THEME = themes/la-abi-pdf.yml
@@ -13,7 +13,7 @@ $(PDF): $(PDF:.pdf=.adoc) $(SRC) $(PDF_THEME)
 		-a pdf-style="$(PDF_THEME)" \
 		-a pdf-fontsdir=fonts \
 		-v \
-		$< -o $@
+		la-abi.adoc -o $@
 
 html: $(patsubst %.adoc, %.html, $(SRC))
 
