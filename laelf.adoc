@@ -1,5 +1,5 @@
 = ELF for the LoongArch™ Architecture
-Version 20231102 +
+Version 20231219 +
 Copyright © Loongson Technology 2023. All rights reserved.
 
 == Abstract
@@ -24,6 +24,10 @@ LoongArch, ELF, ABI, SysV gABI, ELF header, Relocations
 |20231102
 |added relocation R_LARCH_CALL36, removed R_LARCH_DELETE / R_LARCH_CFA, and
 fixed the uleb128 relocation name.
+
+|20231219
+|added the Code Models chapater; added TLS DESC relocations; polished the
+description of relocations.
 |====
 
 == Introduction
@@ -55,11 +59,11 @@ Procedure Linkage Table
 Thread-Local Storage
 
 == ELF Header
-=== e_machine: Identifies the machine
+=== e_machine: identifies the machine
 
 An object file conforming to this specification must have the value `EM_LOONGARCH (258, 0x102)`.
 
-=== e_flags: Identifies ABI type and version
+=== e_flags: identifies ABI type and version
 
 .ABI-related bits in `e_flags`
 [%header,cols="^1,^1,^1,^1"]
@@ -153,7 +157,7 @@ Data model is `ILP32`, where `int`, `long` and pointers are 32-bit.
 |Reserved.
 |===
 
-=== EI_CLASS: File class
+=== EI_CLASS: file class
 
 .ELF file classes
 [%header,cols="^1m,^1m,^3"]
@@ -172,6 +176,8 @@ Data model is `ILP32`, where `int`, `long` and pointers are 32-bit.
 |===
 
 == Relocations
+
+=== Relocation types
 
 .ELF relocation types
 [%header,cols="^1,^4m,^4,^4"]
@@ -233,18 +239,30 @@ Data model is `ILP32`, where `int`, `long` and pointers are 32-bit.
 
 |10
 |R_LARCH_TLS_TPREL32
-|Runtime relocation for TLE-IE
+|Runtime relocation for TLS-IE
 |`+*(int32_t *) PC = T+`
 
 |11
 |R_LARCH_TLS_TPREL64
-|Runtime relocation for TLE-IE
+|Runtime relocation for TLS-IE
 |`+*(int64_t *) PC = T+`
 
 |12
 |R_LARCH_IRELATIVE
 |Runtime local indirect function resolving
 |`+*(void **) PC = (((void *)(*)()) (B + A)) ()+`
+
+|13
+|R_LARCH_TLS_DESC32
+|Runtime relocation for TLS descriptors
+|`+*(int32_t *) PC = resolve function pointer,+`
+`+*(int32_t *) (PC+4) = TLS descriptors argument`
+
+|14
+|R_LARCH_TLS_DESC64
+|Runtime relocation for TLS descriptors
+|`+*(int64_t *) PC = resolve function pointer,+`
+`+*(int64_t *) (PC+8) = TLS descriptors argument`
 
 4+|... Reserved for dynamic linker.
 
@@ -515,64 +533,66 @@ with check 28-bit signed overflow and 4-bit aligned
 |71
 |R_LARCH_PCALA_HI20
 |[31 ... 12] bits of 32/64-bit PC-relative offset
-|`+(*(uint32_t *) PC) [24 ... 5] = (((S+A) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
+|`+(*(uint32_t *) PC) [24 ... 5] = (((S+A+0x800) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
 
-`+Note: The lower 12 bits are not included when calculating the PC-relative offset.+`
+See <<code_models>> for how it works on various code models.
 
 |72
 |R_LARCH_PCALA_LO12
 |[11 ... 0] bits of 32/64-bit address
 |`+(*(uint32_t *) PC) [21 ... 10] = (S+A) [11 ... 0]+`
 
+See <<code_models>> for how it works on various code models.
+
 |73
 |R_LARCH_PCALA64_LO20
 |[51 ... 32] bits of 64-bit PC-relative offset
-|`+(*(uint32_t *) PC) [24 ... 5] = (S+A - (PC & ~0xffffffff)) [51 ... 32]+`
+|`+(*(uint32_t *) PC) [24 ... 5] = (((S+A+0x8000'0000 + (((S+A) & 0x800) ? (0x1000-0x1'0000'0000) : 0)) & ~0xfff) - (PC-8 & ~0xfff)) [51 ... 32]+`
 
 |74
 |R_LARCH_PCALA64_HI12
 |[63 ... 52] bits of 64-bit PC-relative offset
-|`+(*(uint32_t *) PC) [21 ... 10] = (S+A - (PC & ~0xffffffff)) [63 ... 52]+`
+|`+(*(uint32_t *) PC) [21 ... 10] = (((S+A+0x8000'0000 + (((S+A) & 0x800) ? (0x1000-0x1'0000'0000) : 0)) & ~0xfff) - (PC-12 & ~0xfff)) [63 ... 52]+`
 
 |75
 |R_LARCH_GOT_PC_HI20
 |[31 ... 12] bits of 32/64-bit PC-relative offset to GOT entry
-|`+(*(uint32_t *) PC) [24 ... 5] = (((GP+G) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
+|`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+G) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
 
 |76
 |R_LARCH_GOT_PC_LO12
 |[11 ... 0] bits of 32/64-bit GOT entry address
-|`+(*(uint32_t *) PC) [21 ... 10] = (GP+G) [11 ... 0]+`
+|`+(*(uint32_t *) PC) [21 ... 10] = (GOT+G) [11 ... 0]+`
 
 |77
 |R_LARCH_GOT64_PC_LO20
 |[51 ... 32] bits of 64-bit PC-relative offset to GOT entry
-|`+(*(uint32_t *) PC) [24 ... 5] = (GP+G - (PC & ~0xffffffff)) [51 ... 32]+`
+|`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+G+0x8000'0000 + (((GOT+G) & 0x800) ? (0x1000-0x1'0000'0000) : 0)) & ~0xfff) - (PC-8 & ~0xfff)) [51 ... 32]+`
 
 |78
 |R_LARCH_GOT64_PC_HI12
 |[63 ... 52] bits of 64-bit PC-relative offset to GOT entry
-|`+(*(uint32_t *) PC) [21 ... 10] = (GP+G - (PC & ~0xffffffff)) [63 ... 52]+`
+|`+(*(uint32_t *) PC) [21 ... 10] = (((GOT+G+0x8000'0000 + (((GOT+G) & 0x800) ? (0x1000-0x1'0000'0000) : 0)) & ~0xfff) - (PC-12 & ~0xfff)) [63 ... 52]+`
 
 |79
 |R_LARCH_GOT_HI20
 |[31 ... 12] bits of 32/64-bit GOT entry absolute address
-|`+(*(uint32_t *) PC) [24 ... 5] = (GP+G) [31 ... 12]+`
+|`+(*(uint32_t *) PC) [24 ... 5] = (GOT+G) [31 ... 12]+`
 
 |80
 |R_LARCH_GOT_LO12
 |[11 ... 0] bits of 32/64-bit GOT entry absolute address
-|`+(*(uint32_t *) PC) [21 ... 10] = (GP+G) [11 ... 0]+`
+|`+(*(uint32_t *) PC) [21 ... 10] = (GOT+G) [11 ... 0]+`
 
 |81
 |R_LARCH_GOT64_LO20
 |[51 ... 32] bits of 64-bit GOT entry absolute address
-|`+(*(uint32_t *) PC) [24 ... 5] = (GP+G) [51 ... 32]+`
+|`+(*(uint32_t *) PC) [24 ... 5] = (GOT+G) [51 ... 32]+`
 
 |82
 |R_LARCH_GOT64_HI12
 |[63 ... 52] bits of 64-bit GOT entry absolute address
-|`+(*(uint32_t *) PC) [21 ... 10] = (GP+G) [63 ... 52]+`
+|`+(*(uint32_t *) PC) [21 ... 10] = (GOT+G) [63 ... 52]+`
 
 |83
 |R_LARCH_TLS_LE_HI20
@@ -597,62 +617,62 @@ with check 28-bit signed overflow and 4-bit aligned
 |87
 |R_LARCH_TLS_IE_PC_HI20
 |[31 ... 12] bits of 32/64-bit PC-relative offset to TLS IE GOT entry
-|`+(*(uint32_t *) PC) [24 ... 5] = (((GP+IE) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
+|`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+IE) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
 
 |88
 |R_LARCH_TLS_IE_PC_LO12
 |[11 ... 0] bits of 32/64-bit TLS IE GOT entry address
-|`+(*(uint32_t *) PC) [21 ... 10] = (GP+IE) [11 ... 0]+`
+|`+(*(uint32_t *) PC) [21 ... 10] = (GOT+IE) [11 ... 0]+`
 
 |89
 |R_LARCH_TLS_IE64_PC_LO20
 |[51 ... 32] bits of 64-bit PC-relative offset to TLS IE GOT entry
-|`+(*(uint32_t *) PC) [24 ... 5] = (GP+IE - (PC & ~0xffffffff)) [51 ... 32]+`
+|`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+IE+0x8000'0000 + (((GOT+IE) & 0x800) ? (0x1000-0x1'0000'0000) : 0)) & ~0xfff) - (PC-8 & ~0xfff)) [51 ... 32]+`
 
 |90
 |R_LARCH_TLS_IE64_PC_HI12
 |[63 ... 52] bits of 64-bit PC-relative offset to TLS IE GOT entry
-|`+(*(uint32_t *) PC) [21 ... 10] = (GP+IE - (PC & ~0xffffffff)) [63 ... 52]+`
+|`+(*(uint32_t *) PC) [21 ... 10] = (((GOT+IE+0x8000'0000 + (((GOT+IE) & 0x800) ? (0x1000-0x1'0000'0000) : 0)) & ~0xfff) - (PC-12 & ~0xfff)) [63 ... 52]+`
 
 |91
 |R_LARCH_TLS_IE_HI20
 |[31 ... 12] bits of 32/64-bit TLS IE GOT entry absolute address
-|`+(*(uint32_t *) PC) [24 ... 5] = (GP+IE) [31 ... 12]+`
+|`+(*(uint32_t *) PC) [24 ... 5] = (GOT+IE) [31 ... 12]+`
 
 |92
 |R_LARCH_TLS_IE_LO12
 |[11 ... 0] bits of 32/64-bit TLS IE GOT entry absolute address
-|`+(*(uint32_t *) PC) [21 ... 10] = (GP+IE) [11 ... 0]+`
+|`+(*(uint32_t *) PC) [21 ... 10] = (GOT+IE) [11 ... 0]+`
 
 |93
 |R_LARCH_TLS_IE64_LO20
 |[51 ... 32] bits of 64-bit TLS IE GOT entry absolute address
-|`+(*(uint32_t *) PC) [24 ... 5] = (GP+IE) [51 ... 32]+`
+|`+(*(uint32_t *) PC) [24 ... 5] = (GOT+IE) [51 ... 32]+`
 
 |94
 |R_LARCH_TLS_IE64_HI12
 |[63 ... 52] bits of 64-bit TLS IE GOT entry absolute address
-|`+(*(uint32_t *) PC) [21 ... 10] = (GP+IE) [63 ... 52]+`
+|`+(*(uint32_t *) PC) [21 ... 10] = (GOT+IE) [63 ... 52]+`
 
 |95
 |R_LARCH_TLS_LD_PC_HI20
 |[31 ... 12] bits of 32/64-bit PC-relative offset to TLS LD GOT entry
-|`+(*(uint32_t *) PC) [24 ... 5] = (((GP+GD) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
+|`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+GD) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
 
 |96
 |R_LARCH_TLS_LD_HI20
 |[31 ... 12] bits of 32/64-bit TLS LD GOT entry absolute address
-|`+(*(uint32_t *) PC) [24 ... 5] = (GP+IE) [31 ... 12]+`
+|`+(*(uint32_t *) PC) [24 ... 5] = (GOT+GD) [31 ... 12]+`
 
 |97
 |R_LARCH_TLS_GD_PC_HI20
 |[31 ... 12] bits of 32/64-bit PC-relative offset to TLS GD GOT entry
-|`+(*(uint32_t *) PC) [24 ... 5] = (((GP+GD) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
+|`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+GD) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
 
 |98
 |R_LARCH_TLS_GD_HI20
 |[31 ... 12] bits of 32/64-bit TLS GD GOT entry absolute address
-|`+(*(uint32_t *) PC) [24 ... 5] = (GP+IE) [31 ... 12]+`
+|`+(*(uint32_t *) PC) [24 ... 5] = (GOT+GD) [31 ... 12]+`
 
 |99
 |R_LARCH_32_PCREL
@@ -671,7 +691,7 @@ with check 28-bit signed overflow and 4-bit aligned
 
 |102
 |R_LARCH_ALIGN
-|Alignment statement. The addend indicates the number of bytes occupied by nop instructions at the relocation offset. The alignment boundary is specified by the addend rounded up to the next power of two.
+|Alignment statement. If the symbol index is 0, the addend indicates the number of bytes occupied by nop instructions at the relocation offset. The alignment boundary is specified by the addend rounded up to the next power of two. If the symbol index is not 0, the addend indicates the first and third expressions of .align. The lowest 8 bits are used to represent the first expression, other bits are used to represent the third expression.
 |
 
 |103
@@ -711,11 +731,221 @@ with check 28-bit signed overflow and 4-bit aligned
 
 |110
 |R_LARCH_CALL36
-|Used for medium code model function call instruction sequence pcaddu18i and jirl, these two instructions must adjacent.
+|Used for medium code model function call sequence `pcaddu18i + jirl`. The two instructions must be adjacent.
 |`+(*(uint32_t *) PC) [24 ... 5] = (S+A-PC) [37 ... 18],+`
 
  `+(*(uint32_t *) (PC+4)) [25 ... 10] = (S+A-PC) [17 ... 2]+`
+
+|111
+|R_LARCH_TLS_DESC_PC_HI20
+|[31 ... 12] bits of 32/64-bit PC-relative offset to TLS DESC GOT entry
+|`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+GD+0x800) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
+
+|112
+|R_LARCH_TLS_DESC_PC_LO12
+|[11 ... 0] bits of 32/64-bit TLS DESC GOT entry address
+|`+(*(uint32_t *) PC) [21 ... 10] = (GOT+GD) [11 ... 0]+`
+
+|113
+|R_LARCH_TLS_DESC64_PC_LO20
+|[51 ... 32] bits of 64-bit PC-relative offset to TLS DESC GOT entry
+|`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+GD+0x8000'0000 + (((GOT+GD) & 0x800) ? (0x1000-0x1'0000'0000) : 0)) & ~0xfff) - (PC-8 & ~0xfff)) [51 ... 32]+`
+
+|114
+|R_LARCH_TLS_DESC64_PC_HI12
+|[63 ... 52] bits of 64-bit PC-relative offset to TLS DESC GOT entry
+|`+(*(uint32_t *) PC) [21 ... 10] = (((GOT+GD+0x8000'0000 + (((GOT+GD) & 0x800) ? (0x1000-0x1'0000'0000) : 0)) & ~0xfff) - (PC-12 & ~0xfff)) [63 ... 52]+`
+
+|115
+|R_LARCH_TLS_DESC_HI20
+|[31 ... 12] bits of 32/64-bit TLS DESC GOT entry absolute address
+|`+(*(uint32_t *) PC) [24 ... 5] = (GOT+GD) [31 ... 12]+`
+
+|116
+|R_LARCH_TLS_DESC_LO12
+|[11 ... 0] bits of 32/64-bit TLS DESC GOT entry absolute address
+|`+(*(uint32_t *) PC) [21 ... 10] = (GOT+GD) [11 ... 0]+`
+
+|117
+|R_LARCH_TLS_DESC64_LO20
+|[51 ... 32] bits of 64-bit TLS DESC GOT entry absolute address
+|`+(*(uint32_t *) PC) [24 ... 5] = (GOT+GD) [51 ... 32]+`
+
+|118
+|R_LARCH_TLS_DESC64_HI12
+|[63 ... 52] bits of 64-bit TLS DESC GOT entry absolute address
+|`+(*(uint32_t *) PC) [21 ... 10] = (GOT+GD) [63 ... 52]+`
+
+|119
+|R_LARCH_TLS_DESC_LD
+|Used on ld.[wd] for TLS DESC to get the resolve function address from GOT entry
+|
+
+|120
+|R_LARCH_TLS_DESC_CALL
+|Used on jirl for TLS DESC to call the resolve function
+|
+
+|121
+|R_LARCH_TLS_LE_HI20_R
+|[31 ... 12] bits of TLS LE 32/64-bit offset from TP register, can be relaxed
+|`+(*(uint32_t *) PC) [24 ... 5] = (T+0x800) [31 ... 12]+`
+
+|122
+|R_LARCH_TLS_LE_ADD_R
+|TLS LE thread pointer usage, can be relaxed
+|
+
+|123
+|R_LARCH_TLS_LE_LO12_R
+|[11 ... 0] bits of TLS LE 32/64-bit offset from TP register, sign-extended, can be relaxed.
+|`+(*(uint32_t *) PC) [21 ... 10] = T [11 ... 0]+`
+
+|124
+|R_LARCH_TLS_LD_PCREL20_S2
+| 22-bit PC-relative offset to TLS LD GOT entry
+|`+(*(uint32_t *) PC) [24 ... 5] = (GOT+GD) [21 ... 2]+`
+
+|125
+|R_LARCH_TLS_GD_PCREL20_S2
+| 22-bit PC-relative offset to TLS GD GOT entry
+|`+(*(uint32_t *) PC) [24 ... 5] = (GOT+GD) [21 ... 2]+`
+
+|126
+|R_LARCH_TLS_DESC_PCREL20_S2
+| 22-bit PC-relative offset to TLS DESC GOT entry
+|`+(*(uint32_t *) PC) [24 ... 5] = (GOT+GD) [21 ... 2]+`
 |===
+
+=== Variables used in relocation calculation
+
+.Variables used in relocation calculation
+[%header,cols="^1m,^4"]
+|===
+|Variable
+|Description
+
+|RtAddr
+|Runtime address of the symbol in the relocation entry
+
+|PC
+|The address of the instruction to be relocated
+
+|B
+|Base address of an object loaded into the memory
+
+|S
+|The address of the symbol in the relocation entry
+
+|A
+|Addend field in the relocation entry associated with the symbol
+
+|GOT
+|The address of GOT (Global Offset Table)
+
+|G
+|GOT-relative offset of the GOT entry of a symbol. For tls LD/GD symbols, G is always equal to GD.
+
+|T
+|TP-relative offset of a TLS LE/IE symbols
+
+|IE
+|GOT-relative offset of the GOT entry of a TLS IE symbol
+
+|GD
+|GOT-relative offset of the GOT entry of a TLS LD/GD/DESC symbol. If a symbol is referenced by IE, GD/LD and DESC simultaneously, this symbol has five GOT entries. The first two are for GD/LD; the next two are for DESC; the last one is for IE.
+
+|PLT
+|The address of PLT entry of a function symbol
+|===
+
+[[code_models]]
+== Code Models
+
+As a RISC architecture, LoongArch is limited in the range of memory addresses
+that can be encoded and accessed with a single instruction. Several code models
+are defined as schemes to implement memory accesses in different circumstances
+with sequences of instructions of necessary addressing capabilities and
+performance costs.
+
+Generally speaking, wider addressing range requires more instructions and brings
+higher overhead. The performance and size of an application can benefit from a
+code model that does not overestimate the memory space accessed by the code.
+
+=== Normal code model
+
+The normal code model allows the code to address a 4GiB PC-relative memory
+space `[(PC & ~0xfff)-2GiB-0x800, (PC & ~0xfff)+2GiB-0x800)` for data accesses and
+256MiB PC-relative addressing space `[PC-128MiB, PC+128MiB-4]` for function calls.
+This is the default code model.
+
+The following example shows how to load value from a global 32-bit integer
+variable `g1` in this code model:
+----
+00:  pcalau12i $t0, %pc_hi20(g1)
+     0: R_LARCH_PCALA_HI20  g1
+04:  ld.w      $a0, $t0, %pc_lo12(g1)
+     4: R_LARCH_PCALA_LO12  g1
+----
+
+The following example shows how to make function calls in this code model:
+----
+00:  bl %plt(puts)
+     0: R_LARCH_B26  puts
+----
+
+=== Medium code model
+
+For data accesses, the medium code model behaves the same as the normal code model.
+For function calls, this code model allows the code to address a 256GiB PC-relative
+memory space `[PC-128GiB-0x20000, PC+128GiB-0x20000-4]`.
+
+The following example shows how to make a function call to `foo` in this code model:
+----
+00:  pcaddu18i $ra, %call36(foo)
+     0: R_LARCH_CALL36  foo
+04:  jirl      $ra, $ra, 0
+----
+
+=== Extreme code model
+
+The extreme code model uses sequence `pcalau12i + addi.d + lu32i.d + lu52i.d`
+followed by `{ld,st}x.[bhwd]` or `{add,ldx}.d + jirl` to address the full 64-bit
+memory space for data accesses and function calls, respectively.
+
+NOTE: Instructions `pcalau12i`, `addi.d`, `lu32i.d` and `lu52i.d` must be
+adjancent so that the linker can infer the PC of `pcalau12i` to apply
+relocations to `lu32i.d` and `lu52i.d`. Otherwise, the results would be
+incorrect if these four instructions are not in the same 4KiB page.
+
+The following example shows how to load a value from a global 32-bit integer
+variable `g2` in this code model:
+----
+00:  pcalau12i $t1, %pc_hi20(g2)
+     0: R_LARCH_PCALA_HI20  g2
+04:  addi.d    $t0, $zero, %pc_lo12(g2)
+     4: R_LARCH_PCALA_LO12  g2
+08:  lu32i.d   $t0, %pc64_lo20(g2)
+     8: R_LARCH_PCALA64_LO20  g2
+0c:  lu52i.d   $t0, $t0, %pc64_hi12(g2)
+     c: R_LARCH_PCALA64_HI12  g2
+10:  ldx.w     $a0, $t1, $t0
+----
+
+The following example shows how to make a call to function `bar`
+in this code model:
+----
+00:  pcalau12i $t1, %pc_hi20(bar)
+     0: R_LARCH_PCALA_HI20  bar
+04:  addi.d    $t0, $zero, %pc_lo12(bar)
+     4: R_LARCH_PCALA_LO12  bar
+08:  lu32i.d   $t0, %pc64_lo20(bar)
+     8: R_LARCH_PCALA64_LO20  bar
+0c:  lu52i.d   $t0, $t0, %pc64_hi12(bar)
+     c: R_LARCH_PCALA64_HI12  bar
+10:  add.d     $t0, $t0, $t1
+14:  jirl      $ra, $t0, 0
+----
 
 [bibliography]
 == References
