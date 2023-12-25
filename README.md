@@ -92,6 +92,11 @@ release for project management purposes.
     * Remove R_LARCH_CFA and mark its relocation number as reserved.
     * Fix ULEB128 relocation name (R_LARCH_SUB_ULEB128).
 
+- **v2.30**
+
+    * Add vector arguments passing rules to the base ABI.
+    * Add the `Code Models` chapter and require extreme code model instructions sequence to be adjacent.
+    * Add relocation types for TLS descriptors.
 
 ## I18n
 

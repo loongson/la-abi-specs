@@ -1,5 +1,5 @@
 = Procedure Call Standard for the LoongArch™ Architecture
-Version 20231103 +
+Version 20231219 +
 Copyright © Loongson Technology 2023. All rights reserved.
 
 == Abstract
@@ -23,6 +23,9 @@ LoongArch, Procedure call, Calling conventions, Data layout
 
 |20231103
 |revised the parameter passing rules of structures.
+
+|20231219
+|added vector arguments passing rules to the base ABI.
 |====
 
 == Introduction
@@ -319,6 +322,12 @@ specified widths are irrelevant.
 It is possible to define unnamed bit-fields in C. The declared type of these
 bit-fields do not affect the alignment of a structure or union.
 
+=== Vectors
+
+A vector can be either 128 bits or 256 bits wide and can always be interpreted
+as an array of multiple elements of the same basic machine type, with each element
+referred to using an index starting from 0. The lower-indexed elements are located
+on the lower-ordered bits of the vector.
 
 == Subroutine Calling Sequence
 
@@ -424,10 +433,17 @@ argument should be 16-byte-aligned.
 In a procedure call, GARs / FARs are generally only used for passing
 non-floating-point / floating-point argument data, respectively.
 However, the floating-point member of a structure or union argument,
-or a floating-point argument wider than FRLEN may be passed in a GAR.
-For example, a quadruple-precision floating-point argument may be passed or
-returned in a pair of GARs if the GARs are 64-bit wide, otherwise it would be
-passed or returned on the stack.
+or a vector/floating-point argument wider than FRLEN may be passed in a GAR,
+specifically:
+
+* A quadruple-precision floating-point argument may be passed or returned
+in a pair of GARs if the GARs are 64-bit wide, otherwise it would be passed
+or returned entirely on the stack.
+
+* An 128-bit vector may be passed in a pair of GARs with adjacent numbers
+or the combination of a single GAR and a block of memory on the stack if
+the GARs are 64-bit wide, otherwise it will be passed or returned entirely
+on the stack.
 
 NOTE: Currently, the following detailed description of parameter passing rules
 is only guaranteed to cover the `lp64d` and `lp64s` variant, that is, `GRLEN` is
@@ -461,7 +477,7 @@ applies.
 ** The argument is passed in a pair of GARs with adjacent numbers, with the
 lower-ordered GRLEN bits in the low-numbered register. If only one GAR
 is available, the lower-ordered GRLEN bits are passed in this register
-and the most-significant GRLEN bits are passed on the stack. If no GAR is
+and the higher-ordered GRLEN bits are passed on the stack. If no GAR is
 available, the whole argument is passed on the stack.
 
 ==== Structures
@@ -496,7 +512,7 @@ GAR, otherwise it is passed on the stack.
 ** The argument is passed in a pair of GARs with adjacent numbers, with the
 lower-ordered GRLEN bits in the low-numbered register. If only one GAR is
 available, the lower-ordered GRLEN bits are passed in this register and the
-most-significant GRLEN bits are passed on the stack. If no GAR is available, the
+higher-ordered GRLEN bits are passed on the stack. If no GAR is available, the
 whole argument is passed on the stack.
 
 * 0 < w~arg~ ≤ GRLEN
@@ -564,6 +580,27 @@ bits are on the stack. The arguments are passed on the stack when no GAR is avai
 A complex floating-point number, or a structure containing just one complex
 fp32 / fp64 number, is passed as though it were a structure containing two
 fp32 / fp64 members.
+
+==== Vectors
+
+* 128-bit vector argument
+
+** An 128-bit vector argument are passed with two GARs with adjacent numbers
+(if available), with the lower-ordered 64-bit passed in the lower-numbered
+GAR and the higher-ordered 64-bit passed in the higher-numbered GAR.
+
+** If only one GAR is available when allocating storage for this argument, the
+lower-ordered 64-bit goes into the GAR and the higher-ordered 64-bit are passed
+on the stack.
+
+** If no GAR is available, the vector argument is passed entirely on the stack.
+
+* 256-bit vector argument
+
+** 256-bit vector arguments are passed on the stack, either by reference if there
+is a GAR available for its address, or by value otherwise.
+
+Vector members of structure arguments follow the same rules as above.
 
 ==== Variadic arguments
 
