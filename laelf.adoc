@@ -487,14 +487,14 @@ with check 32-bit unsigned overflow
 
 |64
 |R_LARCH_B16
-|18-bit PC-relative jump
+|18-bit PC-relative jump, `%b16(symbol)`
 |`+(*(uint32_t *) PC) [25 ... 10] = (S+A-PC) [17 ... 2]+`
 
 with check 18-bit signed overflow and 4-bit aligned
 
 |65
 |R_LARCH_B21
-|23-bit PC-relative jump
+|23-bit PC-relative jump, `%b21(symbol)`
 |`+(*(uint32_t *) PC) [4 ... 0] = (S+A-PC) [22 ... 18],+`
 
 `+(*(uint32_t *) PC) [25 ... 10] = (S+A-PC) [17 ... 2]+`
@@ -503,7 +503,7 @@ with check 23-bit signed overflow and 4-bit aligned
 
 |66
 |R_LARCH_B26
-|28-bit PC-relative jump
+|28-bit PC-relative jump, `%plt(symbol)`
 |`+(*(uint32_t *) PC) [9 ... 0] = (S+A-PC) [27 ... 18],+`
 
 `+(*(uint32_t *) PC) [25 ... 10] = (S+A-PC) [17 ... 2]+`
@@ -512,171 +512,171 @@ with check 28-bit signed overflow and 4-bit aligned
 
 |67
 |R_LARCH_ABS_HI20
-| [31 ... 12] bits of 32/64-bit absolute address
+| [31 ... 12] bits of 32/64-bit absolute address, `%abs_hi20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (S+A) [31 ... 12]+`
 
 |68
 |R_LARCH_ABS_LO12
-|[11 ... 0] bits of 32/64-bit absolute address
+|[11 ... 0] bits of 32/64-bit absolute address, `%abs_lo12(symbol)`
 |`+(*(uint32_t *) PC) [21 ... 10] = (S+A) [11 ... 0]+`
 
 |69
 |R_LARCH_ABS64_LO20
-|[51 ... 32] bits of 64-bit absolute address
+|[51 ... 32] bits of 64-bit absolute address, `%abs64_lo20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (S+A) [51 ... 32]+`
 
 |70
 |R_LARCH_ABS64_HI12
-|[63 ... 52] bits of 64-bit absolute address
+|[63 ... 52] bits of 64-bit absolute address, `%abs64_hi12(symbol)`
 |`+(*(uint32_t *) PC) [21 ... 10] = (S+A) [63 ... 52]+`
 
 |71
 |R_LARCH_PCALA_HI20
-|[31 ... 12] bits of 32/64-bit PC-relative offset
+|[31 ... 12] bits of 32/64-bit PC-relative offset, `%pc_hi20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (((S+A+0x800) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
 
 See <<code_models>> for how it works on various code models.
 
 |72
 |R_LARCH_PCALA_LO12
-|[11 ... 0] bits of 32/64-bit address
+|[11 ... 0] bits of 32/64-bit address, `%pc_lo12(symbol)`
 |`+(*(uint32_t *) PC) [21 ... 10] = (S+A) [11 ... 0]+`
 
 See <<code_models>> for how it works on various code models.
 
 |73
 |R_LARCH_PCALA64_LO20
-|[51 ... 32] bits of 64-bit PC-relative offset
+|[51 ... 32] bits of 64-bit PC-relative offset, ``%pc64_lo20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (((S+A+0x8000'0000 + (((S+A) & 0x800) ? (0x1000-0x1'0000'0000) : 0)) & ~0xfff) - (PC-8 & ~0xfff)) [51 ... 32]+`
 
 |74
 |R_LARCH_PCALA64_HI12
-|[63 ... 52] bits of 64-bit PC-relative offset
+|[63 ... 52] bits of 64-bit PC-relative offset, `%pc64_hi12(symbol)`
 |`+(*(uint32_t *) PC) [21 ... 10] = (((S+A+0x8000'0000 + (((S+A) & 0x800) ? (0x1000-0x1'0000'0000) : 0)) & ~0xfff) - (PC-12 & ~0xfff)) [63 ... 52]+`
 
 |75
 |R_LARCH_GOT_PC_HI20
-|[31 ... 12] bits of 32/64-bit PC-relative offset to GOT entry
+|[31 ... 12] bits of 32/64-bit PC-relative offset to GOT entry, `%got_pc_hi20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+G) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
 
 |76
 |R_LARCH_GOT_PC_LO12
-|[11 ... 0] bits of 32/64-bit GOT entry address
+|[11 ... 0] bits of 32/64-bit GOT entry address, `%got_pc_lo12(symbol)`
 |`+(*(uint32_t *) PC) [21 ... 10] = (GOT+G) [11 ... 0]+`
 
 |77
 |R_LARCH_GOT64_PC_LO20
-|[51 ... 32] bits of 64-bit PC-relative offset to GOT entry
+|[51 ... 32] bits of 64-bit PC-relative offset to GOT entry, `%got64_pc_hi20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+G+0x8000'0000 + (((GOT+G) & 0x800) ? (0x1000-0x1'0000'0000) : 0)) & ~0xfff) - (PC-8 & ~0xfff)) [51 ... 32]+`
 
 |78
 |R_LARCH_GOT64_PC_HI12
-|[63 ... 52] bits of 64-bit PC-relative offset to GOT entry
+|[63 ... 52] bits of 64-bit PC-relative offset to GOT entry, `%got64_pc_hi12(symbol)`
 |`+(*(uint32_t *) PC) [21 ... 10] = (((GOT+G+0x8000'0000 + (((GOT+G) & 0x800) ? (0x1000-0x1'0000'0000) : 0)) & ~0xfff) - (PC-12 & ~0xfff)) [63 ... 52]+`
 
 |79
 |R_LARCH_GOT_HI20
-|[31 ... 12] bits of 32/64-bit GOT entry absolute address
+|[31 ... 12] bits of 32/64-bit GOT entry absolute address, `%got_hi20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (GOT+G) [31 ... 12]+`
 
 |80
 |R_LARCH_GOT_LO12
-|[11 ... 0] bits of 32/64-bit GOT entry absolute address
+|[11 ... 0] bits of 32/64-bit GOT entry absolute address, `%got_lo12(symbol)`
 |`+(*(uint32_t *) PC) [21 ... 10] = (GOT+G) [11 ... 0]+`
 
 |81
 |R_LARCH_GOT64_LO20
-|[51 ... 32] bits of 64-bit GOT entry absolute address
+|[51 ... 32] bits of 64-bit GOT entry absolute address, `%got64_lo20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (GOT+G) [51 ... 32]+`
 
 |82
 |R_LARCH_GOT64_HI12
-|[63 ... 52] bits of 64-bit GOT entry absolute address
+|[63 ... 52] bits of 64-bit GOT entry absolute address, `%got64_hi12(symbol)`
 |`+(*(uint32_t *) PC) [21 ... 10] = (GOT+G) [63 ... 52]+`
 
 |83
 |R_LARCH_TLS_LE_HI20
-|[31 ... 12] bits of TLS LE 32/64-bit offset from TP register
+|[31 ... 12] bits of TLS LE 32/64-bit offset from TP register, `%le_hi20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = T [31 ... 12]+`
 
 |84
 |R_LARCH_TLS_LE_LO12
-|[11 ... 0] bits of TLS LE 32/64-bit offset from TP register
+|[11 ... 0] bits of TLS LE 32/64-bit offset from TP register, `%le_lo12(symbol)`
 |`+(*(uint32_t *) PC) [21 ... 10] = T [11 ... 0]+`
 
 |85
 |R_LARCH_TLS_LE64_LO20
-|[51 ... 32] bits of TLS LE 64-bit offset from TP register
+|[51 ... 32] bits of TLS LE 64-bit offset from TP register, `%le64_lo20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = T [51 ... 32]+`
 
 |86
 |R_LARCH_TLS_LE64_HI12
-|[63 ... 52] bits of TLS LE 64-bit offset from TP register
+|[63 ... 52] bits of TLS LE 64-bit offset from TP register, `%le64_hi12(symbol)`
 |`+(*(uint32_t *) PC) [21 ... 10] = T [63 ... 52]+`
 
 |87
 |R_LARCH_TLS_IE_PC_HI20
-|[31 ... 12] bits of 32/64-bit PC-relative offset to TLS IE GOT entry
+|[31 ... 12] bits of 32/64-bit PC-relative offset to TLS IE GOT entry, `%ie_pc_hi20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+IE) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
 
 |88
 |R_LARCH_TLS_IE_PC_LO12
-|[11 ... 0] bits of 32/64-bit TLS IE GOT entry address
+|[11 ... 0] bits of 32/64-bit TLS IE GOT entry address, `%ie_pc_lo12(symbol)`
 |`+(*(uint32_t *) PC) [21 ... 10] = (GOT+IE) [11 ... 0]+`
 
 |89
 |R_LARCH_TLS_IE64_PC_LO20
-|[51 ... 32] bits of 64-bit PC-relative offset to TLS IE GOT entry
+|[51 ... 32] bits of 64-bit PC-relative offset to TLS IE GOT entry, `%ie64_pc_lo20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+IE+0x8000'0000 + (((GOT+IE) & 0x800) ? (0x1000-0x1'0000'0000) : 0)) & ~0xfff) - (PC-8 & ~0xfff)) [51 ... 32]+`
 
 |90
 |R_LARCH_TLS_IE64_PC_HI12
-|[63 ... 52] bits of 64-bit PC-relative offset to TLS IE GOT entry
+|[63 ... 52] bits of 64-bit PC-relative offset to TLS IE GOT entry, `%ie64_pc_hi12(symbol)`
 |`+(*(uint32_t *) PC) [21 ... 10] = (((GOT+IE+0x8000'0000 + (((GOT+IE) & 0x800) ? (0x1000-0x1'0000'0000) : 0)) & ~0xfff) - (PC-12 & ~0xfff)) [63 ... 52]+`
 
 |91
 |R_LARCH_TLS_IE_HI20
-|[31 ... 12] bits of 32/64-bit TLS IE GOT entry absolute address
+|[31 ... 12] bits of 32/64-bit TLS IE GOT entry absolute address, `%ie_hi20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (GOT+IE) [31 ... 12]+`
 
 |92
 |R_LARCH_TLS_IE_LO12
-|[11 ... 0] bits of 32/64-bit TLS IE GOT entry absolute address
+|[11 ... 0] bits of 32/64-bit TLS IE GOT entry absolute address, `%ie_lo12(symbol)`
 |`+(*(uint32_t *) PC) [21 ... 10] = (GOT+IE) [11 ... 0]+`
 
 |93
 |R_LARCH_TLS_IE64_LO20
-|[51 ... 32] bits of 64-bit TLS IE GOT entry absolute address
+|[51 ... 32] bits of 64-bit TLS IE GOT entry absolute address, `%ie64_lo20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (GOT+IE) [51 ... 32]+`
 
 |94
 |R_LARCH_TLS_IE64_HI12
-|[63 ... 52] bits of 64-bit TLS IE GOT entry absolute address
+|[63 ... 52] bits of 64-bit TLS IE GOT entry absolute address, `%ie64_hi12(symbol)`
 |`+(*(uint32_t *) PC) [21 ... 10] = (GOT+IE) [63 ... 52]+`
 
 |95
 |R_LARCH_TLS_LD_PC_HI20
-|[31 ... 12] bits of 32/64-bit PC-relative offset to TLS LD GOT entry
+|[31 ... 12] bits of 32/64-bit PC-relative offset to TLS LD GOT entry, `%ld_pc_hi20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+GD) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
 
 |96
 |R_LARCH_TLS_LD_HI20
-|[31 ... 12] bits of 32/64-bit TLS LD GOT entry absolute address
+|[31 ... 12] bits of 32/64-bit TLS LD GOT entry absolute address, `%ld_hi20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (GOT+GD) [31 ... 12]+`
 
 |97
 |R_LARCH_TLS_GD_PC_HI20
-|[31 ... 12] bits of 32/64-bit PC-relative offset to TLS GD GOT entry
+|[31 ... 12] bits of 32/64-bit PC-relative offset to TLS GD GOT entry, `%gd_pc_hi20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+GD) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
 
 |98
 |R_LARCH_TLS_GD_HI20
-|[31 ... 12] bits of 32/64-bit TLS GD GOT entry absolute address
+|[31 ... 12] bits of 32/64-bit TLS GD GOT entry absolute address, `%gd_hi20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (GOT+GD) [31 ... 12]+`
 
 |99
 |R_LARCH_32_PCREL
-|32-bit PC relative
+|32-bit PC relative, 
 |`+(*(uint32_t *) PC) = (S+A-PC) [31 ... 0]+`
 
 |100
@@ -696,7 +696,7 @@ See <<code_models>> for how it works on various code models.
 
 |103
 |R_LARCH_PCREL20_S2
-|22-bit PC-relative offset
+|22-bit PC-relative offset, `%pcrel_20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (S + A - PC) [21 ... 2]+`
 
 |104
@@ -731,89 +731,89 @@ See <<code_models>> for how it works on various code models.
 
 |110
 |R_LARCH_CALL36
-|Used for medium code model function call sequence `pcaddu18i + jirl`. The two instructions must be adjacent.
+|Used for medium code model function call sequence `pcaddu18i + jirl`. The two instructions must be adjacent. `%call36(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (S+A-PC) [37 ... 18],+`
 
  `+(*(uint32_t *) (PC+4)) [25 ... 10] = (S+A-PC) [17 ... 2]+`
 
 |111
 |R_LARCH_TLS_DESC_PC_HI20
-|[31 ... 12] bits of 32/64-bit PC-relative offset to TLS DESC GOT entry
+|[31 ... 12] bits of 32/64-bit PC-relative offset to TLS DESC GOT entry, `%desc_pc_hi20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+GD+0x800) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
 
 |112
 |R_LARCH_TLS_DESC_PC_LO12
-|[11 ... 0] bits of 32/64-bit TLS DESC GOT entry address
+|[11 ... 0] bits of 32/64-bit TLS DESC GOT entry address, `%desc_pc_lo12(symbol)`
 |`+(*(uint32_t *) PC) [21 ... 10] = (GOT+GD) [11 ... 0]+`
 
 |113
 |R_LARCH_TLS_DESC64_PC_LO20
-|[51 ... 32] bits of 64-bit PC-relative offset to TLS DESC GOT entry
+|[51 ... 32] bits of 64-bit PC-relative offset to TLS DESC GOT entry, `%desc64_pc_lo20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+GD+0x8000'0000 + (((GOT+GD) & 0x800) ? (0x1000-0x1'0000'0000) : 0)) & ~0xfff) - (PC-8 & ~0xfff)) [51 ... 32]+`
 
 |114
 |R_LARCH_TLS_DESC64_PC_HI12
-|[63 ... 52] bits of 64-bit PC-relative offset to TLS DESC GOT entry
+|[63 ... 52] bits of 64-bit PC-relative offset to TLS DESC GOT entry, `%desc64_pc_hi12(symbol)`
 |`+(*(uint32_t *) PC) [21 ... 10] = (((GOT+GD+0x8000'0000 + (((GOT+GD) & 0x800) ? (0x1000-0x1'0000'0000) : 0)) & ~0xfff) - (PC-12 & ~0xfff)) [63 ... 52]+`
 
 |115
 |R_LARCH_TLS_DESC_HI20
-|[31 ... 12] bits of 32/64-bit TLS DESC GOT entry absolute address
+|[31 ... 12] bits of 32/64-bit TLS DESC GOT entry absolute address, `%desc_hi20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (GOT+GD) [31 ... 12]+`
 
 |116
 |R_LARCH_TLS_DESC_LO12
-|[11 ... 0] bits of 32/64-bit TLS DESC GOT entry absolute address
+|[11 ... 0] bits of 32/64-bit TLS DESC GOT entry absolute address,  `%desc_lo12(symbol)`
 |`+(*(uint32_t *) PC) [21 ... 10] = (GOT+GD) [11 ... 0]+`
 
 |117
 |R_LARCH_TLS_DESC64_LO20
-|[51 ... 32] bits of 64-bit TLS DESC GOT entry absolute address
+|[51 ... 32] bits of 64-bit TLS DESC GOT entry absolute address, `%desc64_lo20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (GOT+GD) [51 ... 32]+`
 
 |118
 |R_LARCH_TLS_DESC64_HI12
-|[63 ... 52] bits of 64-bit TLS DESC GOT entry absolute address
+|[63 ... 52] bits of 64-bit TLS DESC GOT entry absolute address, `%desc64_hi12(symbol)`
 |`+(*(uint32_t *) PC) [21 ... 10] = (GOT+GD) [63 ... 52]+`
 
 |119
 |R_LARCH_TLS_DESC_LD
-|Used on ld.[wd] for TLS DESC to get the resolve function address from GOT entry
+|Used on ld.[wd] for TLS DESC to get the resolve function address from GOT entry, `%desc_ld(symbol)`
 |
 
 |120
 |R_LARCH_TLS_DESC_CALL
-|Used on jirl for TLS DESC to call the resolve function
+|Used on jirl for TLS DESC to call the resolve function, `%desc_call(symbol)`
 |
 
 |121
 |R_LARCH_TLS_LE_HI20_R
-|[31 ... 12] bits of TLS LE 32/64-bit offset from TP register, can be relaxed
+|[31 ... 12] bits of TLS LE 32/64-bit offset from TP register, can be relaxed, `%le_hi20_r(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (T+0x800) [31 ... 12]+`
 
 |122
 |R_LARCH_TLS_LE_ADD_R
-|TLS LE thread pointer usage, can be relaxed
+|TLS LE thread pointer usage, can be relaxed, `%le_add_r(symbol)`
 |
 
 |123
 |R_LARCH_TLS_LE_LO12_R
-|[11 ... 0] bits of TLS LE 32/64-bit offset from TP register, sign-extended, can be relaxed.
+|[11 ... 0] bits of TLS LE 32/64-bit offset from TP register, sign-extended, can be relaxed, `%le_lo12_r(symbol)`
 |`+(*(uint32_t *) PC) [21 ... 10] = T [11 ... 0]+`
 
 |124
 |R_LARCH_TLS_LD_PCREL20_S2
-| 22-bit PC-relative offset to TLS LD GOT entry
+| 22-bit PC-relative offset to TLS LD GOT entry, `%ld_pcrel_20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (GOT+GD) [21 ... 2]+`
 
 |125
 |R_LARCH_TLS_GD_PCREL20_S2
-| 22-bit PC-relative offset to TLS GD GOT entry
+| 22-bit PC-relative offset to TLS GD GOT entry, `%gd_pcrel_20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (GOT+GD) [21 ... 2]+`
 
 |126
 |R_LARCH_TLS_DESC_PCREL20_S2
-| 22-bit PC-relative offset to TLS DESC GOT entry
+| 22-bit PC-relative offset to TLS DESC GOT entry, `%desc_pcrel_20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (GOT+GD) [21 ... 2]+`
 |===
 
