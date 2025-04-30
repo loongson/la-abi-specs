@@ -546,7 +546,7 @@ See <<code_models>> for how it works on various code models.
 
 |73
 |R_LARCH_PCALA64_LO20
-|[51 ... 32] bits of 64-bit PC-relative offset, ``%pc64_lo20(symbol)`
+|[51 ... 32] bits of 64-bit PC-relative offset, `%pc64_lo20(symbol)`
 |`+(*(uint32_t *) PC) [24 ... 5] = (((S+A+0x8000'0000 + (((S+A) & 0x800) ? (0x1000-0x1'0000'0000) : 0)) & ~0xfff) - (PC-8 & ~0xfff)) [51 ... 32]+`
 
 |74
