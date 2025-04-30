@@ -731,7 +731,7 @@ See <<code_models>> for how it works on various code models.
 
 |110
 |R_LARCH_CALL36
-|Used for medium code model function call sequence `pcaddu18i + jirl`. The two instructions must be adjacent. `%call36(symbol)`
+|Used for medium code model function call sequence `pcaddu18i + jirl`, `%call36(symbol)`. The two instructions must be adjacent.
 |`+(*(uint32_t *) PC) [24 ... 5] = (S+A-PC) [37 ... 18],+`
 
  `+(*(uint32_t *) (PC+4)) [25 ... 10] = (S+A-PC) [17 ... 2]+`
