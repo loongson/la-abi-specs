@@ -1,6 +1,6 @@
 = Procedure Call Standard for the LoongArch™ Architecture
-Version 20231219 +
-Copyright © Loongson Technology 2023. All rights reserved.
+Version 20250521 +
+Copyright © Loongson Technology 2025. All rights reserved.
 
 == Abstract
 
@@ -26,6 +26,12 @@ LoongArch, Procedure call, Calling conventions, Data layout
 
 |20231219
 |added vector arguments passing rules to the base ABI.
+
+|20250521
+|added `_Float16`, `__bf16` and `_BitInt(N)` definitions; fixed discriptive error
+about `GAR` for returning values; clarified how unnamed bit-fields occupy space;
+extended the sign-extension requirement for unsigned integers from the `LP64D` ABI
+to the `LP64` data model.
 |====
 
 == Introduction
@@ -267,7 +273,8 @@ within the program context when passed as arguments and return values of procedu
 .2+| Pointer          | 32-bit data pointer   | 4       | 4         |
                       | 64-bit data pointer   | 8       | 8         |
 
-.3+| Floating Point   | Single precision (fp32) | 4       | 4         .3+| IEEE 754-2008
+.4+| Floating Point   | Half precision (fp16)   | 2       | 2       | _Float16/__bf16
+                      | Single precision (fp32) | 4       | 4       .3+| IEEE 754-2008
                       | Double precision (fp64) | 8       | 8
                       | Quad-precision (fp128)  | 16      | 16
 |===
@@ -281,10 +288,33 @@ the unsigned integral objects are zero-extended, and the signed
 integer data types are sign-extended if the containing register
 is larger in size.
 
-One exception to the above rule is that in the *LP64D* ABI, unsigned words,
+One exception to the above rule is that in the *LP64* data model, unsigned words,
 such as those representing `unsigned int` in <<C-data-types, C>>,
 are stored in general-purpose registers as proper _sign extensions_ of
 their 32-bit values.
+
+=== Fundamental types of N-bit integers
+
+`_BitInt(N)` (as proposed in ISO/IEC WG14 N2763) is a family of integer types
+where `N` specifies the exact number of bits used for its representation.
+
+* `_BitInt(N)` objects are stored in little-endian order in memory
+and are signed by default.
+
+* For N ≤ 64, a `_BitInt(N)` object have the same size and alignment of the
+smallest fundamental integral type that can contain it. The unused high-order
+bits within this containing type are filled with sign or zero extension of
+the N-bit value, depending on whether the `_BitInt(N)` object is signed or
+unsigned. The `_BitInt(N)` object propagates its signedness to the containing
+type and is laid out in a register or memory as an object of this type.
+
+* For N > 64, `_BitInt(N)` objects are implemented as structs of 64-bit
+integer chunks. The number of chunks is the smallest even integer `M` so
+that M * 64 ≥ N. These objects are of the same size of the struct containing
+the chunks, but always have 16-byte alignment. If there are unused bits in the
+highest-ordered chunk that contains used bits, they are defined as the sign- or
+zero- extension of the used bits depending on whether the `_BitInt(N)` object
+is signed or unsigned. If an entire chunk is unused, its bits are undefined.
 
 === Structures, arrays and unions
 
@@ -320,7 +350,8 @@ member bitfields' declared integral types are considered, and their
 specified widths are irrelevant.
 
 It is possible to define unnamed bit-fields in C. The declared type of these
-bit-fields do not affect the alignment of a structure or union.
+bit-fields do not affect the alignment of a structure or union but allocate
+space in the same fashion as named bit-fields.
 
 === Vectors
 
@@ -352,7 +383,7 @@ The registers that can be used for passing arguments and returning values are
 the *argument registers*, which include:
 
 * *GARs*: 8 general-purpose registers `$a0` - `$a7`, where `$a0` and `$a1` are
-also used for integral values.
+also used for returning values.
 
 * *FARs*: 8 floating-point registers `$fa0` - `$fa7`, where `$fa0` and `$fa1`
 are also used for returning values.
@@ -462,9 +493,9 @@ There are two cases:
 ** The argument is passed in a single argument register, or on the stack
 if none is available.
 
-** An fp32 / fp64 argument is passed in an FAR if there is one available.
+** An fp16 / fp32 / fp64 argument is passed in an FAR if there is one available.
 Otherwise, it is passed in a GAR, or on the stack if none of the GARs are
-available. When passed in registers or on the stack, fp32 / fp64 arguments
+available. When passed in registers or on the stack, fp16 / fp32 / fp64 arguments
 narrower than GRLEN bits are widened to GRLEN bits, with the upper bits undefined.
 
 ** An integral argument is passed in a GAR if there is one available.
@@ -683,6 +714,12 @@ signed by default.
 |pointer types
 |64-bit data pointer
 
+|`_Float16`
+|Half precision (IEEE754)
+
+|`__bf16`
+|Half precision (bfloat16)
+
 |`float`
 |Single precision (IEEE754)
 
@@ -720,6 +757,12 @@ signed by default.
 
 |pointer types
 |32-bit data pointer
+
+|`_Float16`
+|Half precision (IEEE754)
+
+|`__bf16`
+|Half precision (bfloat16)
 
 |`float`
 |Single precision (IEEE754)

@@ -98,6 +98,15 @@ release for project management purposes.
     * Add the `Code Models` chapter and require extreme code model instructions sequence to be adjacent.
     * Add relocation types for TLS descriptors.
 
+- **v2.40**
+
+    * Add `_Float16`, `__bf16` and `_BitInt(N)` definitions.
+    * Fix discriptive error about returning values.
+    * Clarify how unnamed bit-fields occupy space.
+    * Extend the sign-extension requirement for unsigned integers from the `LP64D` ABI to the `LP64` data model.
+    * Annotate assembly modifiers and range checking rules for some relocations.
+    * Typo fix.
+
 ## I18n
 
 This specification is written in both English and Chinese. In the event of any
