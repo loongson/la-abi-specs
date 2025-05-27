@@ -7,12 +7,25 @@ page:
   size: a4
 
 base:
-  font_color: #333333
+  font_color: #000000
   font_family: Noto Serif
   font_style: normal
   font_size: 10
   line_height: 1.1
-  vertical_spacing: 11
+
+prose:
+  margin_bottom: 10
+
+block:
+  margin_bottom: 10
+
+admonition:
+  padding: [0, 3cm, 0, 12]
+  column-rule-style: solid
+  column-rule-color: #777777
+  column-rule-width: 0.5
+  label:
+    padding: [0, 12, 0, 30]
 
 heading:
   font_color: #d71520
@@ -24,25 +37,18 @@ heading:
   h4_font_size: round($base_font_size * 1.0)
   font_style: bold
   line_height: 1
-  margin_bottom: $vertical_spacing / 1.5
-  margin_top: $vertical_spacing / 1.5
+  margin_bottom: 8
+  margin_top: 10
 
 code:
   font_color: #333333
-#  font_family: Courier Prime Sans
   font_family: CMU Typewriter
   font_style: normal
   font_size: 10
   background_color: #f6f6f6
-#  border_color: #0f80aa
   border_color: #333333
   border_radius: 2
   line_height: 1.1
-
-#caption:
-#  font_family: CMU Serif
-#  font_style: normal
-#  font_size: 10
 
 literal:
   font_family: CMU Typewriter
@@ -51,6 +57,9 @@ literal:
 
 link:
   font_color: #002FA7
+
+list:
+  item_spacing: 4
 
 description_list:
   description_indent: $base_font_size * 2.5
@@ -97,10 +106,13 @@ toc:
     content: ". "
     font_color: A9A9A9
     levels: 1 2 3
+  indent: 15
 
 
 table:
-  border_width: 1
+  border-width: 1
+  grid-width: 0.5
+  grid-color: #AAAAAA
   cell:
     padding: 3
   head:
@@ -109,6 +121,10 @@ table:
     font_size: 9
   foot:
     font_size: 9
+  caption:
+    font_size: 10
+    font_style: italic
+    margin_inside: 4
 
 footer:
   font_size: 8

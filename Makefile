@@ -10,7 +10,7 @@ $(PDF): $(PDF:.pdf=.adoc) $(SRC) $(PDF_THEME)
 		-a compress \
 		-a date="$(DATE)" \
 		-a monthyear="$(MONTHYEAR)" \
-		-a pdf-style="$(PDF_THEME)" \
+		-a pdf-theme="$(PDF_THEME)" \
 		-a pdf-fontsdir=fonts \
 		-v \
 		la-abi.adoc -o $@
