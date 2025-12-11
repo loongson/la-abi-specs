@@ -1,6 +1,7 @@
 = Application Binary Interface for the LoongArch™ Architecture
-Version 2.40
-Copyright © Loongson Technology 2025. All rights reserved.
+Version 2.50
+:revnumber: Copyright © Loongson Technology 2023, 2025.
+:version-label!:
 :toc: macro
 :toclevels: 3
 :toctitle:

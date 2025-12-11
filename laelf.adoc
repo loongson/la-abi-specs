@@ -1,6 +1,6 @@
 = ELF for the LoongArch™ Architecture
-Version 20250521 +
-Copyright © Loongson Technology 2025. All rights reserved.
+Version 20251210 +
+Copyright © Loongson Technology 2023, 2025. All rights reserved.
 
 == Abstract
 
@@ -32,6 +32,10 @@ description of relocations.
 |20250521
 |annotated assembly modifiers and range checking rules for some relocations;
 typo fix.
+
+|20251210
+|added 13 new relocation types (numbers 127 through 139) applicable to 32-bit
+LoongArch; annotated TLS relocations.
 |====
 
 == Introduction
@@ -831,7 +835,81 @@ with check 22-bit signed overflow and a multiple of 4
 |`+(*(uint32_t *) PC) [24 ... 5] = (GOT+GD) [21 ... 2]+`
 
 with check 22-bit signed overflow and a multiple of 4
+
+|127
+|R_LARCH_CALL30
+|Used for calling a function in medium code model on LA32 with `pcaddu12i + jirl`, `%call30(symbol)`
+|`+(*(uint32_t *) PC) [24 ... 5] = (S+A-PC) [31 ... 12],+`
+
+ `+(*(uint32_t *) (PC+4)) [19 ... 10] = (S+A-PC) [11 ... 2]+`
+
+|128
+|R_LARCH_PCADD_HI20
+|[31 ... 12] bits of 32 PC-relative offset, suitable for `pcaddu12i` instead of `pcalau12i`, `%pcadd_hi20(symbol)`
+|`+(*(uint32_t *) PC) [24 ... 5] = (S+A-PC+0x800) [31 ... 12],+`
+
+|129
+|R_LARCH_PCADD_LO12
+|[11 ... 0] bits of 32-bit PC-relative offset to the target of an `R_LARCH_PCADD_HI20` reloc filling the immediate slot for a `pcaddu12i` instruction at `S`, `%pcadd_lo12(symbol)`
+|`+(*(uint32_t *) PC) [21 ... 10] = (R(S)-S) [11 ... 0],+`
+
+|130
+|R_LARCH_GOT_PCADD_HI20
+|[31 ... 12] bits of 32-bit PC-relative offset to GOT entry, suitable for `pcaddu12i` instead of `pcalau12i`, `%got_pcadd_hi20(symbol)`
+|`+(*(uint32_t *) PC) [24 ... 5] = (GOT+G-PC+0x800) [31 ... 12],+`
+
+|131
+|R_LARCH_GOT_PCADD_LO12
+|[11 ... 0] bits of 32-bit PC-relative offset to the target of an `R_LARCH_GOT_PCADD_HI20` reloc filling the immediate slot for a `pcaddu12i` instruction at `S`, `%got_pcadd_lo12(symbol)`
+|`+(*(uint32_t *) PC) [21 ... 10] = (R(S)-S) [11 ... 0],+`
+
+|132
+|R_LARCH_TLS_IE_PCADD_HI20
+|[31 ... 12] bits of 32-bit PC-relative offset to TLS IE GOT entry, suitable for `pcaddu12i` instead of `pcalau12i`, `%ie_pcadd_hi20(symbol)`
+|`+(*(uint32_t *) PC) [24 ... 5] = (GOT+IE-PC+0x800) [31 ... 12],+`
+
+|133
+|R_LARCH_TLS_IE_PCADD_LO12
+|[11 ... 0] bits of 32-bit PC-relative offset to the target of an `R_LARCH_TLS_IE_PCADD_HI20` reloc filling the immediate slot for a `pcaddu12i` instruction at `S`, `%ie_pcadd_lo12(symbol)`
+|`+(*(uint32_t *) PC) [21 ... 10] = (R(S)-S) [11 ... 0],+`
+
+|134
+|R_LARCH_TLS_LD_PCADD_HI20
+|[31 ... 12] bits of 32-bit PC-relative offset to TLS LD GOT entry, suitable for `pcaddu12i` instead of `pcalau12i`, `%ld_pcadd_hi20(symbol)`
+|`+(*(uint32_t *) PC) [24 ... 5] = (GOT+GD-PC+0x800) [31 ... 12],+`
+
+|135
+|R_LARCH_TLS_LD_PCADD_LO12
+|[11 ... 0] bits of 32-bit PC-relative offset to the target of an `R_LARCH_TLS_LD_PCADD_HI20` reloc filling the immediate slot for a `pcaddu12i` instruction at `S`, `%ld_pcadd_lo12(symbol)`
+|`+(*(uint32_t *) PC) [21 ... 10] = (R(S)-S) [11 ... 0],+`
+
+|136
+|R_LARCH_TLS_GD_PCADD_HI20
+|[31 ... 12] bits of 32-bit PC-relative offset to TLS GD GOT entry, suitable for `pcaddu12i` instead of `pcalau12i`, `%gd_pcadd_hi20(symbol)`
+|`+(*(uint32_t *) PC) [24 ... 5] = (GOT+GD-PC+0x800) [31 ... 12],+`
+
+|137
+|R_LARCH_TLS_GD_PCADD_LO12
+|[11 ... 0] bits of 32-bit PC-relative offset to the target of an `R_LARCH_TLS_GD_PCADD_HI20` reloc filling the immediate slot for a `pcaddu12i` instruction at `S`, `%gd_pcadd_lo12(symbol)`
+|`+(*(uint32_t *) PC) [21 ... 10] = (R(S)-S) [11 ... 0],+`
+
+|138
+|R_LARCH_TLS_DESC_PCADD_HI20
+|[31 ... 12] bits of 32-bit PC-relative offset to TLS descriptor, suitable for `pcaddu12i` instead of `pcalau12i`, `%desc_pcadd_hi20(symbol)`
+|`+(*(uint32_t *) PC) [24 ... 5] = (GOT+GD-PC+0x800) [31 ... 12],+`
+
+|139
+|R_LARCH_TLS_DESC_PCADD_LO12
+|[11 ... 0] bits of 32-bit PC-relative offset to the target of an `R_LARCH_TLS_DESC_PCADD_HI20` reloc filling the immediate slot for a `pcaddu12i` instruction at `S`, `%desc_pcadd_lo12(symbol)`
+|`+(*(uint32_t *) PC) [21 ... 10] = (R(S)-S) [11 ... 0],+`
 |===
+
+NOTE: To support linker relaxation, symbols can't be changed to [section + offset] format.
+This change can reduce the number of symbols.
+
+NOTE: We use general dynamic relocation types to represent the local dynamic TLS model.
+Linkers handle TLSLD relocations as synonyms for TLSGD,
+except that TLSLD only requires one dynamic relocation while TLSGD requires two dynamic relocations.
 
 === Variables used in relocation calculation
 
@@ -873,6 +951,9 @@ with check 22-bit signed overflow and a multiple of 4
 
 |PLT
 |The address of PLT entry of a function symbol
+
+|R(S)
+|The target (it may be a symbol, a GOT entry for a symbol) of an `R_LARCH_*_PCADD_HI20` relocation filling the immediate slot for a `pcaddu12i` instruction at S
 |===
 
 [[code_models]]

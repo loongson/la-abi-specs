@@ -1,6 +1,6 @@
 = Procedure Call Standard for the LoongArch™ Architecture
-Version 20250521 +
-Copyright © Loongson Technology 2025. All rights reserved.
+Version 20251210 +
+Copyright © Loongson Technology 2023, 2025. All rights reserved.
 
 == Abstract
 
@@ -28,10 +28,14 @@ LoongArch, Procedure call, Calling conventions, Data layout
 |added vector arguments passing rules to the base ABI.
 
 |20250521
-|added `_Float16`, `__bf16` and `_BitInt(N)` definitions; fixed discriptive error
+|added `_Float16`, `__bf16` and `_BitInt(N)` definitions; fixed descriptive error
 about `GAR` for returning values; clarified how unnamed bit-fields occupy space;
 extended the sign-extension requirement for unsigned integers from the `LP64D` ABI
 to the `LP64` data model.
+
+|20251210
+|revised the calling convention to support 32-bit LoongArch;
+clarified conditions for integer extension during parameter passing.
 |====
 
 == Introduction
@@ -316,6 +320,9 @@ highest-ordered chunk that contains used bits, they are defined as the sign- or
 zero- extension of the used bits depending on whether the `_BitInt(N)` object
 is signed or unsigned. If an entire chunk is unused, its bits are undefined.
 
+NOTE: Currently, the definition of `_BitInt(N)` is only applicable to 64-bit
+LoongArch.
+
 === Structures, arrays and unions
 
 The following conventional rules are respected:
@@ -476,32 +483,36 @@ or the combination of a single GAR and a block of memory on the stack if
 the GARs are 64-bit wide, otherwise it will be passed or returned entirely
 on the stack.
 
-NOTE: Currently, the following detailed description of parameter passing rules
-is only guaranteed to cover the `lp64d` and `lp64s` variant, that is, `GRLEN` is
-`64` and `FRLEN` is `64` or `0`.
-
 NOTE: In the following text, w~arg~ is used for denoting the size of the
 argument object in bits. And unless otherwise specified, "passed on the stack"
 implies "passed by value".
 
 ==== Scalars of fundamental types
 
-There are two cases:
+An fp16, fp32 or fp64 argument is passed in an FAR if one is available.
+
+* 0 < w~arg~ ≤ FRLEN
+
+** The argument is passed in a single FAR.
+
+** fp16 and fp32 arguments narrower than FRLEN bits are widened to FRLEN bits,
+with the upper bits undefined.
+
+Otherwise, the argument is passed in GAR according to the rules described below.
 
 * 0 < w~arg~ ≤ GRLEN
 
-** The argument is passed in a single argument register, or on the stack
-if none is available.
+** The argument is passed in a single GAR, or on the stack if no register is
+available.
 
-** An fp16 / fp32 / fp64 argument is passed in an FAR if there is one available.
-Otherwise, it is passed in a GAR, or on the stack if none of the GARs are
-available. When passed in registers or on the stack, fp16 / fp32 / fp64 arguments
-narrower than GRLEN bits are widened to GRLEN bits, with the upper bits undefined.
+** A floating-point argument is passed in a GAR, or on the stack if no GAR
+is available. if its width is narrower than GRLEN bits, it is widened to GRLEN
+bits, and the upper bits are left undefined.
 
 ** An integral argument is passed in a GAR if there is one available.
-Otherwise, it is passed on the stack. If the argument is narrower than the
-containing GAR, the <<int_ext_rules, general rules of integral extensions>>
-applies.
+Otherwise, it is passed on the stack. If the argument is narrower than GRLEN
+bits, the <<int_ext_rules, general rules of integral extensions>>
+apply.
 
 * GRLEN < w~arg~ ≤ 2 × GRLEN
 
@@ -510,6 +521,11 @@ lower-ordered GRLEN bits in the low-numbered register. If only one GAR
 is available, the lower-ordered GRLEN bits are passed in this register
 and the higher-ordered GRLEN bits are passed on the stack. If no GAR is
 available, the whole argument is passed on the stack.
+
+* w~arg~ > 2 × GRLEN
+
+** The argument is passed by reference. If a GAR is available, the address is
+passed in the GAR; otherwise, it is passed on the stack.
 
 ==== Structures
 
@@ -558,7 +574,7 @@ stack.
 
 *Structures with floating-point members*
 
-* If the structure consists of one floating-pointer member within FRLEN bits
+* If the structure consists of one floating-point member within FRLEN bits
 wide, it is passed in an FAR if available.
 
 * If the structure consists of two floating-point members both within FRLEN
@@ -616,20 +632,28 @@ fp32 / fp64 members.
 
 * 128-bit vector argument
 
-** An 128-bit vector argument are passed with two GARs with adjacent numbers
+** w~arg~ > 2 × GRLEN
+
+*** 128-bit vector arguments are passed by reference. If a GAR is available, the
+address is passed in the GAR; otherwise, it is passed on the stack.
+
+** 0 < w~arg~ ≤ 2 × GRLEN
+
+*** An 128-bit vector argument are passed with two GARs with adjacent numbers
 (if available), with the lower-ordered 64-bit passed in the lower-numbered
 GAR and the higher-ordered 64-bit passed in the higher-numbered GAR.
 
-** If only one GAR is available when allocating storage for this argument, the
+*** If only one GAR is available when allocating storage for this argument, the
 lower-ordered 64-bit goes into the GAR and the higher-ordered 64-bit are passed
 on the stack.
 
-** If no GAR is available, the vector argument is passed entirely on the stack.
+*** If no GAR is available, the vector argument is passed entirely on the stack.
 
 * 256-bit vector argument
 
-** 256-bit vector arguments are passed on the stack, either by reference if there
-is a GAR available for its address, or by value otherwise.
+** 256-bit vector arguments are always passed by reference. If a GAR is
+available, the address is passed in the GAR; otherwise, it is passed on
+the stack.
 
 Vector members of structure arguments follow the same rules as above.
 

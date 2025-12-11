@@ -1,7 +1,7 @@
-Application Binary Interface for the LoongArch™ Architecture, version 2.40
+Application Binary Interface for the LoongArch™ Architecture, version 2.50
 
 List of documents:
 
-* Procedure Call Standard for the LoongArch™ Architecture, version 20250521
-* ELF for the LoongArch™ Architecture, version 20250521
+* Procedure Call Standard for the LoongArch™ Architecture, version 20251210
+* ELF for the LoongArch™ Architecture, version 20251210
 * DWARF for the LoongArch™ Architecture, version 20230425

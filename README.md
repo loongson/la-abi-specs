@@ -107,6 +107,13 @@ release for project management purposes.
     * Annotate assembly modifiers and range checking rules for some relocations.
     * Typo fix.
 
+- **v2.50**
+
+    * (laelf) Add 13 new relocation types (numbers 127 through 139) applicable to 32-bit LoongArch.
+    * (laelf) Add annotations for TLS relocations.
+    * (lapcs) Revise the calling convention to support 32-bit LoongArch.
+    * (lapcs) Clarify conditions for integer extension during parameter passing.
+
 ## I18n
 
 This specification is written in both English and Chinese. In the event of any
