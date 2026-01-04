@@ -565,7 +565,7 @@ See <<code_models>> for how it works on various code models.
 |75
 |R_LARCH_GOT_PC_HI20
 |[31 ... 12] bits of 32/64-bit PC-relative offset to GOT entry, `%got_pc_hi20(symbol)`
-|`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+G) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
+|`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+G+0x800) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
 
 |76
 |R_LARCH_GOT_PC_LO12
@@ -625,7 +625,7 @@ See <<code_models>> for how it works on various code models.
 |87
 |R_LARCH_TLS_IE_PC_HI20
 |[31 ... 12] bits of 32/64-bit PC-relative offset to TLS IE GOT entry, `%ie_pc_hi20(symbol)`
-|`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+IE) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
+|`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+IE+0x800) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
 
 |88
 |R_LARCH_TLS_IE_PC_LO12
@@ -665,7 +665,7 @@ See <<code_models>> for how it works on various code models.
 |95
 |R_LARCH_TLS_LD_PC_HI20
 |[31 ... 12] bits of 32/64-bit PC-relative offset to TLS LD GOT entry, `%ld_pc_hi20(symbol)`
-|`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+GD) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
+|`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+GD+0x800) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
 
 |96
 |R_LARCH_TLS_LD_HI20
@@ -675,7 +675,7 @@ See <<code_models>> for how it works on various code models.
 |97
 |R_LARCH_TLS_GD_PC_HI20
 |[31 ... 12] bits of 32/64-bit PC-relative offset to TLS GD GOT entry, `%gd_pc_hi20(symbol)`
-|`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+GD) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
+|`+(*(uint32_t *) PC) [24 ... 5] = (((GOT+GD+0x800) & ~0xfff) - (PC & ~0xfff)) [31 ... 12]+`
 
 |98
 |R_LARCH_TLS_GD_HI20
